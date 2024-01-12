@@ -1,0 +1,20 @@
+/node_modules
+/entrypoint
+/product
+
+# Not sure where the fuck this is coming from… must be some dep.
+/.webpack
+
+# Uncomment when need to submit changes.
+/.env*
+
+# IDE, reference: https://github.com/github/gitignore/blob/master/Global/JetBrains.gitignore
+/.idea/dataSources
+/.idea/dataSources.ids
+/.idea/dataSources.local.xml
+/.idea/httpRequests/*
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/tasks.xml
+/.idea/vcs.xml
+/.idea/workspace.xml
