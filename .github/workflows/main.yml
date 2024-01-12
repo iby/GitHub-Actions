@@ -1,0 +1,54 @@
+# https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables
+# https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability
+# https://github.com/peripheryapp/periphery/blob/master/.github/workflows/test.yml
+
+on:
+  push:
+
+# https://docs.github.com/en/actions/using-jobs/using-concurrency
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  init:
+    name: Init & Pre-Check
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      NEEDS_CD: ${{ github.ref == 'refs/tags/production' }}
+    outputs:
+      skip: ${{ steps.skip.outputs.should_skip }}
+      needs_ci: ${{ env.NEEDS_CD == 'true' || steps.skip.outputs.should_skip != 'true' }}
+      needs_cd: ${{ github.ref == 'refs/tags/production' }}
+    steps:
+      - name: Check duplicate CI run
+        id: skip
+        uses: fkirc/skip-duplicate-actions@v5
+
+  ci:
+    name: Lint & Test
+    needs: [ init ]
+    runs-on: ubuntu-latest
+    if: needs.init.outputs.needs_ci == 'true'
+    steps:
+      - run: |
+          echo 'skip: ${{ needs.init.outputs.skip }} (${{ needs.init.outputs.skip == 'true' }})'
+      - run: |
+          echo 'needs_ci: ${{ needs.init.outputs.needs_ci }} (${{ needs.init.outputs.needs_ci == 'true' }})'
+      - run: |
+          echo 'needs_cd: ${{ needs.init.outputs.needs_cd }} (${{ needs.init.outputs.needs_cd == 'true' }})'
+
+  cd:
+    name: Build & Deploy
+    needs: [ init, ci ]
+    runs-on: ubuntu-latest
+    if: needs.init.outputs.needs_cd == 'true'
+    steps:
+      - run: |
+          echo 'skip: ${{ needs.init.outputs.skip }} (${{ needs.init.outputs.skip == 'true' }})'
+      - run: |
+          echo 'needs_ci: ${{ needs.init.outputs.needs_ci }} (${{ needs.init.outputs.needs_ci == 'true' }})'
+      - run: |
+          echo 'needs_cd: ${{ needs.init.outputs.needs_cd }} (${{ needs.init.outputs.needs_cd == 'true' }})'
