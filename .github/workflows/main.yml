@@ -1,10 +1,19 @@
 # https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables
+# https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability
 # https://github.com/peripheryapp/periphery/blob/master/.github/workflows/test.yml
 
 on:
   push:
+
+# https://docs.github.com/en/actions/using-jobs/using-concurrency
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+
   init:
+    name: Init & Pre-Check
     runs-on: ubuntu-latest
     continue-on-error: true
     env:
@@ -17,9 +26,11 @@ jobs:
       - name: Check duplicate CI run
         id: skip
         uses: fkirc/skip-duplicate-actions@v5
+
   ci:
+    name: Lint & Test
+    needs: [ init ]
     runs-on: ubuntu-latest
-    needs: [init]
     if: needs.init.outputs.needs_ci == 'true'
     steps:
       - run: |
@@ -28,9 +39,11 @@ jobs:
           echo 'needs_ci: ${{ needs.init.outputs.needs_ci }} (${{ needs.init.outputs.needs_ci == 'true' }})'
       - run: |
           echo 'needs_cd: ${{ needs.init.outputs.needs_cd }} (${{ needs.init.outputs.needs_cd == 'true' }})'
+
   cd:
+    name: Build & Deploy
+    needs: [ init, ci ]
     runs-on: ubuntu-latest
-    needs: [init, ci]
     if: needs.init.outputs.needs_cd == 'true'
     steps:
       - run: |
