@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "scripts": {
+    "act": "actionlint && act --verbose --secret GITHUB_TOKEN=\"$(gh auth token)\""
+  }
+}

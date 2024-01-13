@@ -4,44 +4,25 @@
 on:
   push:
 
-# ❌ VAR expression
 env:
   VAR: ${{ true && 'foo' || 'bar' }}
 jobs:
   job-1:
     runs-on: ubuntu-latest
+    env:
+      NEEDS_CD: ${{ github.ref == 'refs/tags/production' }}
+    outputs:
+      skip: ${{ steps.skip.outputs.should_skip }}
+      needs_ci: ${{ env.NEEDS_CD || steps.skip.outputs.should_skip != 'true' }}
+      needs_cd: ${{ github.ref == 'refs/tags/production' }}
     steps:
-      - run: echo $VAR
+      - name: Check duplicate CI run
+        id: skip
+        uses: fkirc/skip-duplicate-actions@v5
   job-2:
     runs-on: ubuntu-latest
-    if: env.VAR == 'foo'
+    needs: job-1
     steps:
-      - run: echo $VAR
-
-# ✅ VAR expression
-#env:
-#  VAR: ${{ true && 'foo' || 'bar' }}
-#jobs:
-#  job-1:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - run: echo $VAR
-#  job-2:
-#    runs-on: ubuntu-latest
-#    if: ${{ env.VAR  }} == 'foo'
-#    steps:
-#      - run: echo $VAR
-
-# ✅ Plain VAR
-#env:
-#  VAR: 'foo'
-#jobs:
-#  job-1:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - run: echo $VAR
-#  job-2:
-#    runs-on: ubuntu-latest
-#    if: ${{ env.VAR == 'foo' }}
-#    steps:
-#      - run: echo $VAR
+      - run: echo ${{ needs.job-1.outputs.skip }}
+      - run: echo ${{ needs.job-1.outputs.needs_ci }}
+      - run: echo ${{ needs.job-1.outputs.needs_cd }}
