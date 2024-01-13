@@ -3,26 +3,39 @@
 
 on:
   push:
-
-env:
-  VAR: ${{ true && 'foo' || 'bar' }}
 jobs:
-  job-1:
+  init:
     runs-on: ubuntu-latest
+    continue-on-error: true
     env:
       NEEDS_CD: ${{ github.ref == 'refs/tags/production' }}
     outputs:
       skip: ${{ steps.skip.outputs.should_skip }}
-      needs_ci: ${{ env.NEEDS_CD || steps.skip.outputs.should_skip != 'true' }}
+      needs_ci: ${{ env.NEEDS_CD == 'true' || steps.skip.outputs.should_skip != 'true' }}
       needs_cd: ${{ github.ref == 'refs/tags/production' }}
     steps:
       - name: Check duplicate CI run
         id: skip
         uses: fkirc/skip-duplicate-actions@v5
-  job-2:
+  ci:
     runs-on: ubuntu-latest
-    needs: job-1
+    needs: [init]
+    if: needs.init.outputs.needs_ci == 'true'
     steps:
-      - run: echo ${{ needs.job-1.outputs.skip }}
-      - run: echo ${{ needs.job-1.outputs.needs_ci }}
-      - run: echo ${{ needs.job-1.outputs.needs_cd }}
+      - run: |
+          echo 'skip: ${{ needs.init.outputs.skip }} (${{ needs.init.outputs.skip == 'true' }})'
+      - run: |
+          echo 'needs_ci: ${{ needs.init.outputs.needs_ci }} (${{ needs.init.outputs.needs_ci == 'true' }})'
+      - run: |
+          echo 'needs_cd: ${{ needs.init.outputs.needs_cd }} (${{ needs.init.outputs.needs_cd == 'true' }})'
+  cd:
+    runs-on: ubuntu-latest
+    needs: [init, ci]
+    if: needs.init.outputs.needs_cd == 'true'
+    steps:
+      - run: |
+          echo 'skip: ${{ needs.init.outputs.skip }} (${{ needs.init.outputs.skip == 'true' }})'
+      - run: |
+          echo 'needs_ci: ${{ needs.init.outputs.needs_ci }} (${{ needs.init.outputs.needs_ci == 'true' }})'
+      - run: |
+          echo 'needs_cd: ${{ needs.init.outputs.needs_cd }} (${{ needs.init.outputs.needs_cd == 'true' }})'
