@@ -1,0 +1,14 @@
+# https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables
+# https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability
+# https://github.com/peripheryapp/periphery/blob/master/.github/workflows/test.yml
+
+on:
+  push:
+
+jobs:
+  main:
+    name: Self-Hosted
+    runs-on: [ self-hosted, macOS ]
+    steps:
+      - run: echo $PATH
+      - run: which jq
